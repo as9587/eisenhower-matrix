@@ -228,25 +228,25 @@ function QuadrantSection({
 }
 
 export default function Component() {
-  const [tasks, setTasks] = useState<TaskCard[]>([
-    {
-      id: "1",
-      title: "Fix critical bug in production",
-      dueDate: "2024-01-15",
-      quadrant: "urgent-important",
-    },
-    {
-      id: "2",
-      title: "Plan quarterly review",
-      dueDate: "2024-01-30",
-      quadrant: "not-urgent-important",
-    },
-    {
-      id: "3",
-      title: "Respond to non-critical emails",
-      dueDate: "2024-01-16",
-      quadrant: "urgent-not-important",
-    },
+  const [tasks, setTasks] = useState<TaskCard[]>([])
+
+useEffect(() => {
+  const fetchTasks = async () => {
+    const { data, error } = await supabase.from('tasks').select('*')
+    if (error) console.error('Error loading tasks:', error)
+    else if (data) {
+      const formatted = data.map(task => ({
+        id: task.id,
+        title: task.title,
+        dueDate: task.dueDate || "",
+        quadrant: task.quadrant || "not-urgent-not-important",
+      }))
+      setTasks(formatted)
+    }
+  }
+  fetchTasks()
+}, [])
+
   ])
 
   const [activeTask, setActiveTask] = useState<TaskCard | null>(null)
@@ -293,6 +293,12 @@ export default function Component() {
         dueDate: newTask.dueDate,
         quadrant: "not-urgent-not-important",
       }
+      const insertToSupabase = async () => {
+      const { error } = await supabase.from('tasks').insert([newTask])
+      if (error) console.error("Insert failed:", error)
+    }
+    insertToSupabase()
+
       setTasks((prev) => [...prev, task])
       setNewTask({ title: "", dueDate: "" })
       setIsDialogOpen(false)
